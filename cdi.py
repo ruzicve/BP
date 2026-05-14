@@ -394,7 +394,8 @@ def cdi_loop_generator(sqrt_I, init_supp, total_cycles=5, beta=0.9,
 
 
 # ---VISUALISATION OF RESULTS
-def save_comprehensive_snapshot(cycle, img_hio, img_er, support, errors, output_dir, prefix="demo"):
+def save_comprehensive_snapshot(cycle, img_hio, img_er, support, errors, output_dir,
+                                prefix="demo", colour="magma"):
     """
     Plots and saves a 1x4 figure containing:
     Post-HIO, Post-ER, Shrinkwrap Support, and Error Metric history.
@@ -406,17 +407,17 @@ def save_comprehensive_snapshot(cycle, img_hio, img_er, support, errors, output_
     fig.suptitle(f"{prefix.capitalize()} - Cycle {cycle}", fontsize=16)
 
     # Post-HIO
-    im0 = axes[0].imshow(np.abs(img_hio), cmap='magma')
+    im0 = axes[0].imshow(np.abs(img_hio), cmap=colour)
     axes[0].set_title("Post-HIO")
     fig.colorbar(im0, ax=axes[0], fraction=0.046, pad=0.04)
 
     # Post-ER
-    im1 = axes[1].imshow(np.abs(img_er), cmap='magma')
+    im1 = axes[1].imshow(np.abs(img_er), cmap=colour)
     axes[1].set_title("Post-ER")
     fig.colorbar(im1, ax=axes[1], fraction=0.046, pad=0.04)
 
     # Support
-    im2 = axes[2].imshow(support, cmap='gray')
+    im2 = axes[2].imshow(support, cmap="gray")
     axes[2].set_title("Support (Shrinkwrap)")
     fig.colorbar(im2, ax=axes[2], fraction=0.046, pad=0.04)
 

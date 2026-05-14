@@ -1,3 +1,4 @@
+"""Demonstration of usage for tools in cdi.py"""
 from cdi import *
 from skimage import data
 from skimage.morphology import star
@@ -27,7 +28,7 @@ g_final_star, errors_star, history_star, history_sup_star = cdi_loop(
     init_supp=pad_supp_star,
     snapshots=snapshots_star,
     total_cycles=total_cycles_star,
-    beta=0.9, hio_iter=80, er_iter=20
+    beta=0.9
 )
 
 # Plot the saved snapshots
@@ -70,14 +71,16 @@ generator_cam = cdi_loop_generator(
     sqrt_I=sqrt_I_cam,
     init_supp=pad_supp_cam,
     total_cycles=10,
-    beta=0.9, hio_iter=800, er_iter=200
+    beta=0.9,
+    hio_iter=200,
+    er_iter=40,
 )
 
 # Iterate through the generator, processing and
 # plotting every cycle on the fly
 for cycle, g_er, support, current_errors in generator_cam:
     save_comprehensive_snapshot(cycle, g_er, g_er, support, current_errors,
-                                out_dir_cam, prefix="cameraman_phase")
+                                out_dir_cam, prefix="cameraman", colour="gray")
 
 logger.info(f"Cameraman results saved to {out_dir_cam}/")
 
@@ -112,9 +115,7 @@ try:
         sqrt_I=sqrt_I_my,
         init_supp=pad_supp_my,
         total_cycles=10,
-        beta=0.9,
-        hio_iter=400,
-        er_iter=100
+        beta=0.9
     )
 
     # Save results on the fly
