@@ -7,12 +7,13 @@ from skimage.morphology import star
 # 1. PROCESSING A GEOMETRICAL OBJECT (Star) USING cdi_loop
 # =====================================================================
 logger.info("--- Starting Star Object Reconstruction ---")
-out_dir_star = "results_star"
+out_dir_star = "results_phase"
 
 # Setup Object
 star_img = star(100).astype(float)
 rough_supp_star = get_rough_support(star_img)
-pad_img_star, pad_supp_star = oversample(star_img, rough_supp_star,
+phase_star = phase_object(star_img)
+pad_img_star, pad_supp_star = oversample(phase_star, rough_supp_star,
                                          oversampling=4.0)
 
 # Simulate Diffraction
@@ -20,7 +21,7 @@ sqrt_I_star = diffraction(pad_img_star)
 
 # Define when to take snapshots (here every 2nd cycle)
 total_cycles_star = 6
-snapshots_star = [0, 2, 4]
+snapshots_star = [0, 1, 3, 5]
 
 # Run the standard loop
 g_final_star, errors_star, history_star, history_sup_star = cdi_loop(
@@ -40,7 +41,7 @@ for k in snapshots_star:
     current_errors = errors_star[:(k + 1) * iters_per_cycle]
 
     save_comprehensive_snapshot(k, img_hio, img_er, support, current_errors,
-                                out_dir_star, prefix="star")
+                                out_dir_star, prefix="phase_star")
 logger.info(f"Star results saved to {out_dir_star}/")
 
 # =====================================================================
@@ -56,11 +57,8 @@ cameraman_img = data.camera()
 # (background goes to 1+0j otherwise)
 rough_supp_cam = get_rough_support(to_grayscale(cameraman_img))
 
-# Convert to phase object
-phase_cam = phase_object(cameraman_img)
-
 # Oversample
-pad_img_cam, pad_supp_cam = oversample(phase_cam, rough_supp_cam,
+pad_img_cam, pad_supp_cam = oversample(cameraman_img, rough_supp_cam,
                                        oversampling=4.0)
 
 # Simulate Diffraction
@@ -72,8 +70,6 @@ generator_cam = cdi_loop_generator(
     init_supp=pad_supp_cam,
     total_cycles=10,
     beta=0.9,
-    hio_iter=200,
-    er_iter=40,
 )
 
 # Iterate through the generator, processing and
