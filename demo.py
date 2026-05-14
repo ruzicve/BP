@@ -20,8 +20,8 @@ pad_img_star, pad_supp_star = oversample(phase_star, rough_supp_star,
 sqrt_I_star = diffraction(pad_img_star)
 
 # Define when to take snapshots (here every 2nd cycle)
-total_cycles_star = 6
-snapshots_star = [0, 1, 3, 5]
+total_cycles_star = 100
+snapshots_star = [0, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
 
 # Run the standard loop
 g_final_star, errors_star, history_star, history_sup_star = cdi_loop(
@@ -29,7 +29,7 @@ g_final_star, errors_star, history_star, history_sup_star = cdi_loop(
     init_supp=pad_supp_star,
     snapshots=snapshots_star,
     total_cycles=total_cycles_star,
-    beta=0.9
+    beta=0.7
 )
 
 # Plot the saved snapshots
