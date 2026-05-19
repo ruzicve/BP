@@ -188,16 +188,36 @@ def scale_to_pi(image):
     return scaled_pi
 
 
-def phase_object(image):
-    """Convert a simulated 2D object into a phase object.
-
-    inputs: image, np.ndarray
-    returns: phase image, np.ndarray
+def phase_object(image, max_phase=np.pi / 2):
     """
-    scaled_image = scale_to_pi(image)
-    phase_image = np.exp(scaled_image * 1j)
-    logger.info("Image successfully converted to phase object.")
-    return phase_image
+    Convert a simulated 2D object into a complex phase object.
+    Automatically forces the amplitude to 0 in regions where the input image is 0.
+
+    inputs:
+        image: np.ndarray (the raw object data)
+        max_phase: float (the maximum phase shift, defaults to 90 degrees)
+
+    returns:
+        complex phase image, np.ndarray
+    """
+    img_min = np.min(image)
+    img_max = np.max(image)
+
+    if img_max > img_min:
+        normalized_img = (image - img_min) / (img_max - img_min)
+    else:
+        normalized_img = np.zeros_like(image)
+
+    phase_angles = normalized_img * max_phase
+
+    complex_layer = np.exp(1j * phase_angles)
+
+    object_mask = (image > 0).astype(float)
+
+    true_phase_obj = complex_layer * object_mask
+
+    logger.info(f"Phase object generated with max phase {max_phase}. Background isolated automatically.")
+    return true_phase_obj
 
 
 # --- SIMULATING DIFFRACTION FROM A DIGITAL IMAGE ---
