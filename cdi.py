@@ -263,7 +263,7 @@ def HIO_rule(g, sqrt_I, beta, support, is_real):
     mask = (support == 1)
 
     if not is_real:
-        g_new = mask * constrained_inside + (~mask) * (g - beta * g_mod)
+        g_new = mask * g_mod + (~mask) * (g - beta * g_mod)
     else:
         # Enforce positivity inside support
         g_real = np.real(g_mod)

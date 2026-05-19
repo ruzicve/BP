@@ -4,7 +4,7 @@ from skimage import data
 from scipy.ndimage import binary_dilation
 
 # =====================================================================
-# 1. PROCESSING A PHASE OBJECT (Cameraman) USING cdi_loop_generator
+# 1. PROCESSING A REAL IMAGE USING cdi_loop_generator
 # =====================================================================
 logger.info("--- Starting Cameraman Reconstruction ---")
 out_dir_cam = "results_cameraman_1"
@@ -42,7 +42,7 @@ for cycle, g_er, support, current_errors in generator_cam:
 logger.info(f"Cameraman results saved to {out_dir_cam}/")
 
 # =====================================================================
-# 2. PROCESSING UPLOADED IMAGE USING cdi_loop_generator
+# 2. PROCESSING AN UPLOADED IMAGE (star) USING cdi_loop_generator
 # =====================================================================
 logger.info("--- Starting Uploaded Image Reconstruction ---")
 out_dir_upload = "results_uploaded"
