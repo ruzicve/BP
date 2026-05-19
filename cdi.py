@@ -425,7 +425,7 @@ def cdi_loop_generator(sqrt_I, init_supp, total_cycles=5, beta=0.9,
 
 # ---VISUALISATION OF RESULTS
 def save_comprehensive_snapshot(cycle, img_hio, img_er, support, errors, output_dir,
-                                prefix="demo", colour="magma"):
+                                prefix="demo", colour="magma", is_phase=False):
     """
     Plots and saves a 1x4 figure containing:
     Post-HIO, Post-ER, Shrinkwrap Support, and Error Metric history.
@@ -436,19 +436,37 @@ def save_comprehensive_snapshot(cycle, img_hio, img_er, support, errors, output_
     fig, axes = plt.subplots(1, 4, figsize=(20, 5))
     fig.suptitle(f"{prefix.capitalize()} - Cycle {cycle}", fontsize=16)
 
+    # --- THE FIX: Choose what to display based on object type ---
+    if is_phase:
+        # Extract the phase. We multiply by the support just to keep the
+        # background black (phase in empty space is just random noise)
+        display_hio = np.angle(img_hio) * support
+        display_er = np.angle(img_er) * support
+
+        # 'twilight' or 'hsv' are great colormaps for phase since they wrap around
+        plot_cmap = "twilight"
+        plot_title = "Phase"
+    else:
+        # Extract the amplitude for normal images
+        display_hio = np.abs(img_hio)
+        display_er = np.abs(img_er)
+        plot_cmap = colour
+        plot_title = "Amplitude"
+    # ------------------------------------------------------------
+
     # Post-HIO
-    im0 = axes[0].imshow(np.abs(img_hio), cmap=colour)
-    axes[0].set_title("Post-HIO")
+    im0 = axes[0].imshow(display_hio, cmap=plot_cmap)
+    axes[0].set_title(f"Post-HIO ({plot_title})")
     fig.colorbar(im0, ax=axes[0], fraction=0.046, pad=0.04)
 
     # Post-ER
-    im1 = axes[1].imshow(np.abs(img_er), cmap=colour)
-    axes[1].set_title("Post-ER")
+    im1 = axes[1].imshow(display_er, cmap=plot_cmap)
+    axes[1].set_title(f"Post-ER ({plot_title})")
     fig.colorbar(im1, ax=axes[1], fraction=0.046, pad=0.04)
 
     # Support
     im2 = axes[2].imshow(support, cmap="gray")
-    axes[2].set_title("Support (Shrinkwrap)")
+    axes[2].set_title("Support Mask")
     fig.colorbar(im2, ax=axes[2], fraction=0.046, pad=0.04)
 
     # Error Metric
@@ -456,11 +474,10 @@ def save_comprehensive_snapshot(cycle, img_hio, img_er, support, errors, output_
     axes[3].set_title("Error Metric")
     axes[3].set_xlabel("Iterations")
     axes[3].set_ylabel("Error")
-    axes[3].set_yscale("log")  # Log scale is usually best for CDI convergence
+    axes[3].set_yscale("log")
 
     plt.tight_layout()
     save_path = os.path.join(output_dir, f"{prefix}_cycle_{cycle:04d}.png")
     plt.savefig(save_path)
     plt.close(fig)
     logger.info(f"Saved comprehensive snapshot for cycle {cycle} to {save_path}")
-

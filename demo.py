@@ -101,7 +101,7 @@ L_img[80:100, 60:110] = 1.0  # Horizontal bar extending right
 
 # Create an asymmetric support by slightly dilating the true shape.
 # (Simulates a tight support mask)
-L_support = binary_dilation(L_img, iterations=3).astype(float)
+L_support = binary_dilation(L_img, iterations=15).astype(float)
 
 phase_L = phase_object(L_img)
 pad_img_L, pad_supp_L = oversample(phase_L, L_support,
