@@ -121,7 +121,8 @@ g_final_L, errors_L, history_L, history_sup_L = cdi_loop(
     snapshots=snapshots_L,
     total_cycles=total_cycles_L,
     beta=0.7,
-    use_sw=False
+    use_sw=False,
+    is_phase=True
 )
 
 # Plot the saved snapshots
