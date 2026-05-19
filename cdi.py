@@ -324,7 +324,7 @@ def shrinkwrap(g, sigma=2.0, threshold_ratio=0.1):
 # -----THE LOOP---
 def cdi_loop(sqrt_I, init_supp,g=None, snapshots=None, total_cycles = 5,
              beta =0.9, hio_iter=80, er_iter=20, sigma=2.0, tau = 0.1,
-             is_real=False, is_phae=False, use_sw=True):
+             is_real=False, is_phase=False, use_sw=True):
     """Run HIO, ER and shrinkwrap on an image and save the state of the phase reconstruction after
        select cycles.
 
