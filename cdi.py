@@ -247,7 +247,7 @@ def ER_rule(g, sqrt_I, support):
     return P_S(g_mod, support), error
 
 
-def HIO_rule(g, sqrt_I, beta, support):
+def HIO_rule(g, sqrt_I, beta, support, is_real):
     """Calculate the HIO update rule.
 
     inputs:
@@ -261,9 +261,18 @@ def HIO_rule(g, sqrt_I, beta, support):
     """
     g_mod, error = P_M(g, sqrt_I)
     mask = (support == 1)
-    g_new = mask * g_mod + (~mask) * (g - beta * g_mod)
-    return g_new, error
 
+    if not is_real:
+        g_new = mask * constrained_inside + (~mask) * (g - beta * g_mod)
+    else:
+        # Enforce positivity inside support
+        g_real = np.real(g_mod)
+        good_pixels = mask & (g_real > 0)
+
+        g_new = np.empty_like(g, dtype=np.complex128)
+        g_new[good_pixels] = g_real[good_pixels]
+        g_new[~good_pixels] = g[~good_pixels] - beta * g_mod[~good_pixels]
+    return g_new, error
 
 # ------INITIAL GUESS---
 def generate_guess(sqrt_I):
@@ -298,7 +307,8 @@ def shrinkwrap(g, sigma=2.0, threshold_ratio=0.1):
 
 # -----THE LOOP---
 def cdi_loop(sqrt_I, init_supp,g=None, snapshots=None, total_cycles = 5,
-             beta =0.9, hio_iter=80, er_iter=20, sigma=2.0, tau = 0.1):
+             beta =0.9, hio_iter=80, er_iter=20, sigma=2.0, tau = 0.1,
+             is_real=False, use_sw=True):
     """Run HIO, ER and shrinkwrap on an image and save the state of the phase reconstruction after
        select cycles.
 
@@ -329,7 +339,7 @@ def cdi_loop(sqrt_I, init_supp,g=None, snapshots=None, total_cycles = 5,
     for k in range(total_cycles):
 
         for i in range(hio_iter):
-            g_new, error = HIO_rule(g, sqrt_I, beta, support)
+            g_new, error = HIO_rule(g, sqrt_I, beta, support, is_real)
             g = g_new
             error_metric.append(error)
 
@@ -349,7 +359,8 @@ def cdi_loop(sqrt_I, init_supp,g=None, snapshots=None, total_cycles = 5,
             history[2*k + 1] = g.copy()
             history_sup[k] = support.copy()
 
-        support = shrinkwrap(g, sigma, tau)
+        if use_sw:
+            support = shrinkwrap(g, sigma, tau)
 
     logger.info(f"Reconstruction successful with {total_cycles} cycles of HIO: {hio_iter},"
                 f" beta={beta}, ER: {er_iter}, shrinkwrap: sigma={sigma}, tau={tau}")
@@ -358,7 +369,8 @@ def cdi_loop(sqrt_I, init_supp,g=None, snapshots=None, total_cycles = 5,
 
 # ---GENERATOR VERSION---
 def cdi_loop_generator(sqrt_I, init_supp, total_cycles=5, beta=0.9,
-                       hio_iter=80, er_iter=20, sigma=2.0, tau=0.1):
+                       hio_iter=80, er_iter=20, sigma=2.0, tau=0.1,
+                       is_real=False, use_sw=True):
     """Run HIO, ER and shrinkwrap on an image and save the state of the phase
        reconstruction after each cycle.
     inputs:
@@ -379,16 +391,18 @@ def cdi_loop_generator(sqrt_I, init_supp, total_cycles=5, beta=0.9,
     error_metric = []
     for k in range(total_cycles):
         for i in range(hio_iter):
-            g, error = HIO_rule(g, sqrt_I, beta=beta, support=support)
+            g, error = HIO_rule(g, sqrt_I, beta, support, is_real)
             sanity_check(error, cycle=k, iteration=i, phase="HIO")
             error_metric.append(error)
 
         for j in range(er_iter):
-            g, error = ER_rule(g, sqrt_I, support=support)
+            g, error = ER_rule(g, sqrt_I, support)
             sanity_check(error, cycle=k, iteration=j, phase="ER")
             error_metric.append(error)
 
-        support = shrinkwrap(g, sigma=sigma, threshold_ratio=tau)
+        if use_sw:
+            support = shrinkwrap(g, sigma=sigma, threshold_ratio=tau)
+
         logger.info(f"Yielding result of iteration: {k}.")
         yield k, g.copy(), support.copy(), error_metric[:]
 

@@ -1,54 +1,13 @@
 """Demonstration of usage for tools in cdi.py"""
 from cdi import *
 from skimage import data
-from skimage.morphology import star
+from scipy.ndimage import binary_dilation
 
 # =====================================================================
-# 1. PROCESSING A GEOMETRICAL OBJECT (Star) USING cdi_loop
+# 1. PROCESSING A PHASE OBJECT (Cameraman) USING cdi_loop_generator
 # =====================================================================
-logger.info("--- Starting Star Object Reconstruction ---")
-out_dir_star = "results_phase"
-
-# Setup Object
-star_img = star(100).astype(float)
-rough_supp_star = get_rough_support(star_img)
-phase_star = phase_object(star_img)
-pad_img_star, pad_supp_star = oversample(phase_star, rough_supp_star,
-                                         oversampling=4.0)
-
-# Simulate Diffraction
-sqrt_I_star = diffraction(pad_img_star)
-
-# Define when to take snapshots (here every 2nd cycle)
-total_cycles_star = 100
-snapshots_star = [0, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
-
-# Run the standard loop
-g_final_star, errors_star, history_star, history_sup_star = cdi_loop(
-    sqrt_I=sqrt_I_star,
-    init_supp=pad_supp_star,
-    snapshots=snapshots_star,
-    total_cycles=total_cycles_star,
-    beta=0.7
-)
-
-# Plot the saved snapshots
-iters_per_cycle = 80 + 20
-for k in snapshots_star:
-    img_hio = history_star[2 * k]
-    img_er = history_star[2 * k + 1]
-    support = history_sup_star[k]
-    current_errors = errors_star[:(k + 1) * iters_per_cycle]
-
-    save_comprehensive_snapshot(k, img_hio, img_er, support, current_errors,
-                                out_dir_star, prefix="phase_star")
-logger.info(f"Star results saved to {out_dir_star}/")
-
-# =====================================================================
-# 2. PROCESSING A PHASE OBJECT (Cameraman) USING cdi_loop_generator
-# =====================================================================
-logger.info("--- Starting Cameraman Phase Object Reconstruction ---")
-out_dir_cam = "results_cameraman"
+logger.info("--- Starting Cameraman Reconstruction ---")
+out_dir_cam = "results_cameraman_1"
 
 # Setup Object
 cameraman_img = data.camera()
@@ -68,8 +27,10 @@ sqrt_I_cam = diffraction(pad_img_cam)
 generator_cam = cdi_loop_generator(
     sqrt_I=sqrt_I_cam,
     init_supp=pad_supp_cam,
-    total_cycles=10,
+    total_cycles=15,
     beta=0.9,
+    is_real=True,
+    use_sw=False
 )
 
 # Iterate through the generator, processing and
@@ -81,7 +42,7 @@ for cycle, g_er, support, current_errors in generator_cam:
 logger.info(f"Cameraman results saved to {out_dir_cam}/")
 
 # =====================================================================
-# 3. PROCESSING EXPERIMENTAL DATA / UPLOADED IMAGE
+# 2. PROCESSING UPLOADED IMAGE USING cdi_loop_generator
 # =====================================================================
 logger.info("--- Starting Uploaded Image Reconstruction ---")
 out_dir_upload = "results_uploaded"
@@ -124,3 +85,52 @@ try:
 except FileNotFoundError:
     print(f"Note: Could not find '{my_image_path}'. Place an image with this"
           f" name in the directory to test Section 3.")
+
+# =====================================================================
+# 3. PROCESSING A PHASE OBJECT (L) USING cdi_loop
+# =====================================================================
+logger.info("--- Starting Phase Object Reconstruction ---")
+out_dir_L = "results_phase"
+
+# Setup Object
+L_img = np.zeros((128, 128), dtype=float)
+
+# Draw an asymmetrical 'L' shape
+L_img[30:100, 40:60] = 1.0  # Vertical bar
+L_img[80:100, 60:110] = 1.0  # Horizontal bar extending right
+
+# Create an asymmetric support by slightly dilating the true shape.
+# (Simulates a tight support mask)
+L_support = binary_dilation(L_img, iterations=3).astype(float)
+
+phase_L = phase_object(L_img)
+pad_img_L, pad_supp_L = oversample(phase_L, L_support,
+                                    oversampling=4.0)
+
+# Simulate Diffraction
+sqrt_I_star = diffraction(pad_img_L)
+
+# Define when to take snapshots (here every 2nd cycle)
+total_cycles_L = 100
+snapshots_L = [0, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
+
+# Run the standard loop
+g_final_L, errors_L, history_L, history_sup_L = cdi_loop(
+    sqrt_I=sqrt_I_star,
+    init_supp=pad_supp_L,
+    snapshots=snapshots_L,
+    total_cycles=total_cycles_L,
+    beta=0.7
+)
+
+# Plot the saved snapshots
+iters_per_cycle = 80 + 20
+for k in snapshots_L:
+    img_hio = history_L[2 * k]
+    img_er = history_L[2 * k + 1]
+    support = history_sup_L[k]
+    current_errors = errors_L[:(k + 1) * iters_per_cycle]
+
+    save_comprehensive_snapshot(k, img_hio, img_er, support, current_errors,
+                                out_dir_L, prefix="phase_L")
+logger.info(f"Star results saved to {out_dir_L}/")
